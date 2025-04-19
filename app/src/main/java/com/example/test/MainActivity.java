@@ -45,7 +45,7 @@ public class MainActivity extends AppCompatActivity {
     ValueCallback<Uri[]> mFilePathCallbackArray;
     private static final int JOB_ID = 100;
     private final Handler handler = new Handler();
-    private final int RELOAD_INTERVAL = 10 * 60 * 1000; // 每10分钟重载一次
+    private final int RELOAD_INTERVAL = 20 * 60 * 1000; // 每10分钟重载一次
 
     private final Runnable reloadRunnable = new Runnable() {
         @Override
@@ -61,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
 
     private String getUrlWithTimestamp() {
         long timestamp = System.currentTimeMillis();
-        return "http://10.114.136.173:8082/#/pages/views/pickTemplate/pickStateTWSB?t=" + timestamp;
+        return "http://10.114.136.173:8082/#/?t=" + timestamp;
     }
 
     @SuppressLint("SetJavaScriptEnabled")
