@@ -61,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
 
     private String getUrlWithTimestamp() {
         long timestamp = System.currentTimeMillis();
-        return "http://10.114.136.173:8082/#/?t=" + timestamp;
+        return "http://10.114.136.173:8282/#/?t=" + timestamp;
     }
 
     @SuppressLint("SetJavaScriptEnabled")
