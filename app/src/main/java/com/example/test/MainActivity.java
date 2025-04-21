@@ -144,7 +144,7 @@ public class MainActivity extends AppCompatActivity {
 
         // 加载页面
         long timestamp = System.currentTimeMillis();
-        String url = "http://10.30.101.11:8282/#/?t=" + timestamp;
+        String url = "http://10.114.136.173:8082/#/pages/views/pickTemplate/pickStateTWSB?t=" + timestamp;
         webView.loadUrl(url);
     }
 
