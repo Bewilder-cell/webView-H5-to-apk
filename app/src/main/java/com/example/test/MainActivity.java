@@ -1,42 +1,3 @@
-package com.example.test;
-
-import android.annotation.SuppressLint;
-import android.app.DownloadManager;
-import android.content.BroadcastReceiver;
-import android.content.ContentResolver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.database.Cursor;
-import android.net.Uri;
-import android.os.Build;
-import android.os.Bundle;
-import android.os.Environment;
-import android.provider.MediaStore;
-import android.view.KeyEvent;
-import android.webkit.CookieManager;
-import android.webkit.DownloadListener;
-import android.webkit.URLUtil;
-import android.webkit.ValueCallback;
-import android.webkit.WebChromeClient;
-import android.webkit.WebResourceRequest;
-import android.webkit.WebResourceError;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
-import android.widget.Toast;
-
-import androidx.appcompat.app.AppCompatActivity;
-
-import java.io.File;
-import java.util.Objects;
-
-import android.app.job.JobInfo;
-import android.app.job.JobScheduler;
-import android.content.ComponentName;
-import android.os.Handler;
-import android.util.Log;
-
 public class MainActivity extends AppCompatActivity {
 
     private WebView webView;
@@ -44,25 +5,17 @@ public class MainActivity extends AppCompatActivity {
     ValueCallback<Uri> mFilePathCallback;
     ValueCallback<Uri[]> mFilePathCallbackArray;
     private static final int JOB_ID = 100;
-    private final Handler handler = new Handler();
-    private final int RELOAD_INTERVAL = 20 * 60 * 1000; // 每10分钟重载一次
+    private static final long RELOAD_INTERVAL_MS = 4 * 60 * 60 * 1000; // 每 4 小时
 
-    private final Runnable reloadRunnable = new Runnable() {
+    private Handler handler = new Handler();
+
+    private Runnable recreateWebViewRunnable = new Runnable() {
         @Override
         public void run() {
-            if (webView != null) {
-                String timestampUrl = getUrlWithTimestamp();
-                webView.loadUrl(timestampUrl);
-                Log.d("WebView", "重新加载页面：" + timestampUrl);
-            }
-            handler.postDelayed(this, RELOAD_INTERVAL);
+            recreateWebView();
+            handler.postDelayed(this, RELOAD_INTERVAL_MS); // 循环执行
         }
     };
-
-    private String getUrlWithTimestamp() {
-        long timestamp = System.currentTimeMillis();
-        return "http://10.114.136.173:8282/#/?t=" + timestamp;
-    }
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -71,25 +24,34 @@ public class MainActivity extends AppCompatActivity {
         Objects.requireNonNull(getSupportActionBar()).hide();
         setContentView(R.layout.activity_main);
 
+        createWebView(); // 初次创建 WebView
+        startForegroundService();
+
+        // 启动定时重建 WebView
+        handler.postDelayed(recreateWebViewRunnable, RELOAD_INTERVAL_MS);
+    }
+
+    private void createWebView() {
         webView = findViewById(R.id.web_view);
+        WebSettings settings = webView.getSettings();
+        settings.setJavaScriptEnabled(true);
+        settings.setDomStorageEnabled(true);
+        settings.setMediaPlaybackRequiresUserGesture(false);
+        settings.setAllowFileAccess(true);
+        settings.setUseWideViewPort(true);
+        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
 
         webView.setWebViewClient(new WebViewClient() {
-            @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
                 view.loadUrl(url);
                 return true;
-            }
-
-            @Override
-            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-                view.loadUrl(getUrlWithTimestamp()); // 加载失败时重试
             }
         });
 
         webView.setWebChromeClient(new WebChromeClient() {
             public void openFileChooser(ValueCallback<Uri> uploadFile, String acceptType, String capture) {
                 mFilePathCallback = uploadFile;
-                handle(uploadFile);
+                openFilePicker();
             }
 
             public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
@@ -97,152 +59,51 @@ public class MainActivity extends AppCompatActivity {
                     mFilePathCallbackArray.onReceiveValue(null);
                 }
                 mFilePathCallbackArray = filePathCallback;
-                handleup(filePathCallback);
+                openFilePicker();
                 return true;
             }
-
-            private void handle(ValueCallback<Uri> uploadFile) {
-                Intent intent = new Intent(Intent.ACTION_PICK);
-                intent.setType("*/*");
-                startActivityForResult(intent, PICK_REQUEST);
-            }
-
-            private void handleup(ValueCallback<Uri[]> uploadFile) {
-                Intent intent = new Intent(Intent.ACTION_PICK);
-                intent.setType("*/*");
-                startActivityForResult(intent, PICK_REQUEST);
-            }
         });
 
-        webView.setDownloadListener(new DownloadListener() {
-            public void onDownloadStart(String url, String userAgent, String contentDisposition, String mimetype, long contentLength) {
-                DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
-                String cookies = CookieManager.getInstance().getCookie(url);
-                request.addRequestHeader("cookie", cookies);
-                request.addRequestHeader("User-Agent", userAgent);
-                request.setDescription("下载中...");
-                request.setTitle(URLUtil.guessFileName(url, contentDisposition, mimetype));
-                request.allowScanningByMediaScanner();
-                request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-                request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, URLUtil.guessFileName(url, contentDisposition, mimetype));
-
-                DownloadManager manager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
-                manager.enqueue(request);
-
-                showMessage("下载中...");
-
-                BroadcastReceiver onComplete = new BroadcastReceiver() {
-                    public void onReceive(Context ctxt, Intent intent) {
-                        showMessage("下载完成");
-                        unregisterReceiver(this);
-                    }
-                };
-
-                registerReceiver(onComplete, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
-            }
+        webView.setDownloadListener((url, userAgent, contentDisposition, mimetype, contentLength) -> {
+            DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
+            String cookies = CookieManager.getInstance().getCookie(url);
+            request.addRequestHeader("cookie", cookies);
+            request.addRequestHeader("User-Agent", userAgent);
+            request.setDescription("下载中...");
+            request.setTitle(URLUtil.guessFileName(url, contentDisposition, mimetype));
+            request.allowScanningByMediaScanner();
+            request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, URLUtil.guessFileName(url, contentDisposition, mimetype));
+            ((DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE)).enqueue(request);
+            showMessage("下载中...");
         });
 
-        // WebView 设置优化
-        WebSettings settings = webView.getSettings();
-        settings.setJavaScriptEnabled(true);
-        settings.setDomStorageEnabled(true);
-        settings.setUseWideViewPort(true);
-        settings.setAllowFileAccess(true);
-        settings.setMediaPlaybackRequiresUserGesture(false);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
-        }
-
-        // 加载网页
-        webView.loadUrl(getUrlWithTimestamp());
-
-        // 启动前台服务和保活
-        startForegroundService();
-
-        // 开启定时刷新任务
-        handler.postDelayed(reloadRunnable, RELOAD_INTERVAL);
-
-        // Web 页中尝试触发音频加载
-        webView.loadUrl("javascript:(function() { " +
-            "var audio = document.getElementById('alarmSound');" +
-            "if(audio){audio.load();}" +
-            "})()");
+        long timestamp = System.currentTimeMillis();
+        String url = "http://10.30.101.11:8282/#/?t=" + timestamp;
+        webView.loadUrl(url);
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        handler.removeCallbacks(reloadRunnable);
+    private void recreateWebView() {
         if (webView != null) {
             webView.destroy();
             webView = null;
         }
+
+        // 延迟一点点再重新创建，避免立即重建导致黑屏
+        handler.postDelayed(() -> {
+            setContentView(R.layout.activity_main); // 重新 setContentView，重新加载布局
+            createWebView();
+        }, 1000);
     }
 
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if ((keyCode == KeyEvent.KEYCODE_BACK) && webView.canGoBack()) {
-            webView.goBack();
-            return true;
-        }
-        return super.onKeyDown(keyCode, event);
-    }
-
-    @Deprecated
-    public void showMessage(String _s) {
-        Toast.makeText(getApplicationContext(), _s, Toast.LENGTH_SHORT).show();
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == PICK_REQUEST) {
-            if (null != data) {
-                Uri uri = data.getData();
-                handleCallback(uri);
-            } else {
-                handleCallback(null);
-            }
-        } else {
-            handleCallback(null);
-        }
-    }
-
-    private void handleCallback(Uri uri) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            if (mFilePathCallbackArray != null) {
-                mFilePathCallbackArray.onReceiveValue(uri != null ? new Uri[]{uri} : null);
-                mFilePathCallbackArray = null;
-            }
-        } else {
-            if (mFilePathCallback != null) {
-                if (uri != null) {
-                    String url = getFilePathFromContentUri(uri, getContentResolver());
-                    Uri u = Uri.fromFile(new File(url));
-                    mFilePathCallback.onReceiveValue(u);
-                } else {
-                    mFilePathCallback.onReceiveValue(null);
-                }
-                mFilePathCallback = null;
-            }
-        }
-    }
-
-    public static String getFilePathFromContentUri(Uri selectedVideoUri, ContentResolver contentResolver) {
-        String filePath;
-        String[] filePathColumn = {MediaStore.MediaColumns.DATA};
-        Cursor cursor = contentResolver.query(selectedVideoUri, filePathColumn, null, null, null);
-        cursor.moveToFirst();
-        int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-        filePath = cursor.getString(columnIndex);
-        cursor.close();
-        return filePath;
+    private void openFilePicker() {
+        Intent intent = new Intent(Intent.ACTION_PICK);
+        intent.setType("*/*");
+        startActivityForResult(intent, PICK_REQUEST);
     }
 
     private void startForegroundService() {
-        Intent serviceIntent = new Intent(this, ForegroundService.class);
-        startService(serviceIntent);
+        startService(new Intent(this, ForegroundService.class));
         startService(new Intent(this, LocalService.class));
         startService(new Intent(this, RemoteService.class));
         scheduleJob();
@@ -256,13 +117,68 @@ public class MainActivity extends AppCompatActivity {
         builder.setMinimumLatency(3 * 60 * 1000);
         builder.setOverrideDeadline(10 * 60 * 1000);
         builder.setPersisted(true);
-
         JobScheduler jobScheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
         if (jobScheduler != null) {
-            int resultCode = jobScheduler.schedule(builder.build());
-            if (resultCode == JobScheduler.RESULT_SUCCESS) {
-                Log.d("MainActivity", "Job scheduled successfully!");
+            jobScheduler.schedule(builder.build());
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == PICK_REQUEST) {
+            Uri uri = (data != null) ? data.getData() : null;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                if (mFilePathCallbackArray != null) {
+                    mFilePathCallbackArray.onReceiveValue(uri != null ? new Uri[]{uri} : null);
+                    mFilePathCallbackArray = null;
+                }
+            } else {
+                if (mFilePathCallback != null) {
+                    if (uri != null) {
+                        String path = getFilePathFromContentUri(uri, getContentResolver());
+                        uri = Uri.fromFile(new File(path));
+                    }
+                    mFilePathCallback.onReceiveValue(uri);
+                    mFilePathCallback = null;
+                }
             }
         }
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    public static String getFilePathFromContentUri(Uri uri, ContentResolver contentResolver) {
+        String filePath;
+        String[] filePathColumn = {MediaStore.MediaColumns.DATA};
+        Cursor cursor = contentResolver.query(uri, filePathColumn, null, null, null);
+        if (cursor != null) {
+            cursor.moveToFirst();
+            int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+            filePath = cursor.getString(columnIndex);
+            cursor.close();
+            return filePath;
+        }
+        return null;
+    }
+
+    @Override
+    protected void onDestroy() {
+        handler.removeCallbacks(recreateWebViewRunnable);
+        if (webView != null) {
+            webView.destroy();
+        }
+        super.onDestroy();
+    }
+
+    public void showMessage(String msg) {
+        Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if ((keyCode == KeyEvent.KEYCODE_BACK) && webView != null && webView.canGoBack()) {
+            webView.goBack();
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
     }
 }
