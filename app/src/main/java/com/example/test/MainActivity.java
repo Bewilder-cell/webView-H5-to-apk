@@ -48,11 +48,15 @@ public class MainActivity extends AppCompatActivity {
     ValueCallback<Uri[]> mFilePathCallbackArray;
     private static final int JOB_ID = 100;
     
-    // 添加内存监控相关变量
-    private static final int MEMORY_THRESHOLD = 80; // 80MB
+    // 修改内存监控相关变量
+    private static final int MEMORY_THRESHOLD = 40; // 降低到40MB
+    private static final int CRITICAL_MEMORY_THRESHOLD = 20; // 严重不足阈值20MB
     private Handler memoryCheckHandler;
-    private static final long MEMORY_CHECK_INTERVAL = 10000; // 10秒检查一次
+    private static final long MEMORY_CHECK_INTERVAL = 5000; // 缩短到5秒检查一次
     private static final String TAG = "MainActivity";
+    private static final long AUTO_RELOAD_INTERVAL = 3600000; // 1小时自动重载一次
+    private int consecutiveLowMemoryCount = 0; // 连续低内存计数
+    private static final int MAX_LOW_MEMORY_COUNT = 3; // 连续3次触发强制重载
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -75,7 +79,17 @@ public class MainActivity extends AppCompatActivity {
         settings.setDomStorageEnabled(true);
         settings.setUseWideViewPort(true);
         settings.setLoadWithOverviewMode(true);
+        
+        // 更激进的缓存策略
         settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
+        settings.setAppCacheEnabled(false);
+        settings.setDatabaseEnabled(false); // 禁用数据库
+        settings.setGeolocationEnabled(false); // 禁用地理位置
+        settings.setSaveFormData(false); // 禁用表单数据保存
+        settings.setLoadsImagesAutomatically(true); // 允许自动加载图片
+        
+        // 设置低内存模式
+        settings.setRenderPriority(WebSettings.RenderPriority.LOW);
         
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
@@ -90,6 +104,13 @@ public class MainActivity extends AppCompatActivity {
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
                 view.loadUrl(url);
                 return true;
+            }
+            
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                // 页面加载完成后执行内存清理
+                clearWebViewMemory();
             }
         });
 
@@ -204,6 +225,8 @@ public class MainActivity extends AppCompatActivity {
         if (webView != null) {
             webView.onPause();
             webView.pauseTimers();
+            // 暂停时释放更多内存
+            clearWebViewMemory();
         }
     }
 
@@ -226,9 +249,15 @@ public class MainActivity extends AppCompatActivity {
             webView.stopLoading();
             webView.clearHistory();
             webView.clearCache(true);
+            webView.clearFormData();
+            webView.clearSslPreferences();
             webView.destroy();
             webView = null;
         }
+        
+        // 强制清理
+        System.gc();
+        Runtime.getRuntime().gc();
         
         super.onDestroy();
     }
@@ -339,6 +368,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void startMemoryMonitoring() {
         memoryCheckHandler = new Handler(Looper.getMainLooper());
+        
+        // 定期内存检查
         memoryCheckHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -346,6 +377,15 @@ public class MainActivity extends AppCompatActivity {
                 memoryCheckHandler.postDelayed(this, MEMORY_CHECK_INTERVAL);
             }
         }, MEMORY_CHECK_INTERVAL);
+        
+        // 定期重载页面
+        memoryCheckHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                reloadWebView();
+                memoryCheckHandler.postDelayed(this, AUTO_RELOAD_INTERVAL);
+            }
+        }, AUTO_RELOAD_INTERVAL);
     }
 
     private void checkMemoryUsage() {
@@ -357,9 +397,23 @@ public class MainActivity extends AppCompatActivity {
         
         Log.d(TAG, "当前可用内存: " + availableMegs + "MB");
         
-        if (availableMegs < MEMORY_THRESHOLD) {
+        if (availableMegs < CRITICAL_MEMORY_THRESHOLD) {
+            // 内存严重不足，强制重载
+            Log.w(TAG, "内存严重不足，执行强制重载");
+            reloadWebView();
+            consecutiveLowMemoryCount = 0;
+        } else if (availableMegs < MEMORY_THRESHOLD) {
             Log.w(TAG, "内存不足，执行清理");
             clearWebViewMemory();
+            consecutiveLowMemoryCount++;
+            
+            if (consecutiveLowMemoryCount >= MAX_LOW_MEMORY_COUNT) {
+                // 连续多次内存不足，执行重载
+                reloadWebView();
+                consecutiveLowMemoryCount = 0;
+            }
+        } else {
+            consecutiveLowMemoryCount = 0;
         }
     }
 
@@ -368,13 +422,38 @@ public class MainActivity extends AppCompatActivity {
             webView.clearCache(true);
             webView.clearHistory();
             webView.clearFormData();
+            webView.clearSslPreferences();
             
-            // 重新加载当前页面
-            String currentUrl = webView.getUrl();
-            webView.loadUrl(currentUrl);
+            // 清理DOM存储
+            webView.getSettings().setDomStorageEnabled(false);
+            webView.getSettings().setDomStorageEnabled(true);
+            
+            // 执行JavaScript垃圾回收
+            webView.loadUrl("javascript:void(0)");
             
             // 触发垃圾回收
             System.gc();
+            Runtime.getRuntime().gc();
+        }
+    }
+
+    private void reloadWebView() {
+        if (webView != null) {
+            Log.d(TAG, "执行WebView重载");
+            
+            // 保存当前URL
+            String currentUrl = webView.getUrl();
+            
+            // 清理所有资源
+            clearWebViewMemory();
+            
+            // 重新加载页面
+            if (currentUrl != null) {
+                webView.loadUrl(currentUrl);
+            }
+            
+            // 显示提示
+            showMessage("页面已刷新");
         }
     }
 
