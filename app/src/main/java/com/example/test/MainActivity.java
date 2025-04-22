@@ -39,6 +39,8 @@ import android.app.job.JobInfo;
 import android.app.job.JobScheduler;
 import android.content.ComponentName;
 import android.util.Log;
+import android.view.WindowManager;
+import android.view.View;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -64,12 +66,33 @@ public class MainActivity extends AppCompatActivity {
         Thread.setDefaultUncaughtExceptionHandler(new CrashHandler(this));
         
         super.onCreate(savedInstanceState);
-        //隐藏ActionBar
+        
+        // 设置全屏和隐藏导航栏
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            getWindow().getAttributes().layoutInDisplayCutoutMode = 
+                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+        }
+        
+        getWindow().setFlags(
+            WindowManager.LayoutParams.FLAG_FULLSCREEN |
+            WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON,
+            WindowManager.LayoutParams.FLAG_FULLSCREEN |
+            WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+        );
+
+        // 隐藏导航栏
+        getWindow().getDecorView().setSystemUiVisibility(
+            View.SYSTEM_UI_FLAG_LAYOUT_STABLE |
+            View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
+            View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
+            View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
+            View.SYSTEM_UI_FLAG_FULLSCREEN |
+            View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+        );
+        
+        // 隐藏ActionBar
         Objects.requireNonNull(getSupportActionBar()).hide();
         setContentView(R.layout.activity_main);
-        
-        // 保持屏幕常亮
-        getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         
         // 请求忽略电池优化
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -579,6 +602,22 @@ public class MainActivity extends AppCompatActivity {
                 | android.view.View.SYSTEM_UI_FLAG_FULLSCREEN
                 | android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
         }
+    }
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        // 处理TV遥控器按键
+        if (event.getAction() == KeyEvent.ACTION_DOWN) {
+            switch (event.getKeyCode()) {
+                case KeyEvent.KEYCODE_BACK:
+                    // 拦截返回键，防止退出应用
+                    return true;
+                case KeyEvent.KEYCODE_HOME:
+                    // 拦截Home键
+                    return true;
+            }
+        }
+        return super.dispatchKeyEvent(event);
     }
 
 }

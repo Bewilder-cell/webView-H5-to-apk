@@ -3,52 +3,39 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.example.test">
 
-    <uses-permission android:name='android.permission.INTERNET'
-        tools:ignore="ManifestOrder,WrongManifestParent" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        tools:ignore="ScopedStorage" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
-    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
-    <uses-permission android:name="android.permission.BIND_ACCESSIBILITY_SERVICE" />
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
-    <!-- 声明这是一个TV应用 -->
     <uses-feature
         android:name="android.software.leanback"
         android:required="true" />
     <uses-feature
         android:name="android.hardware.touchscreen"
         android:required="false" />
+    <uses-feature
+        android:name="android.hardware.faketouch"
+        android:required="false" />
 
     <application
         android:name=".MyApplication"
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
         android:banner="@drawable/app_banner"
+        android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
-        android:supportsRtl="true"
-        android:theme="@style/Theme.Leanback"
-        android:usesCleartextTraffic="true"
         android:largeHeap="true"
-        android:hardwareAccelerated="false"
-        android:persistent="true"
-        tools:targetApi="m">
+        android:theme="@style/Theme.Leanback"
+        android:usesCleartextTraffic="true">
+
         <activity
             android:name=".MainActivity"
-            android:launchMode="singleTask"
             android:exported="true"
+            android:launchMode="singleTask"
             android:screenOrientation="landscape"
-            android:configChanges="keyboard|keyboardHidden|navigation"
-            android:defaultToDeviceProtectedStorage="true"
-            android:directBootAware="true">
+            android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize"
+            android:theme="@style/Theme.Leanback">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
@@ -56,48 +43,23 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <service
-            android:name=".ForegroundService"
-            android:enabled="true"
-            android:exported="false"
-            android:directBootAware="true" />
-            
+
         <receiver
             android:name=".BootReceiver"
-            android:directBootAware="true"
             android:enabled="true"
-            android:exported="true">
+            android:exported="true"
+            android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
             <intent-filter android:priority="999">
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
-                <action android:name="android.intent.action.USER_PRESENT" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </receiver>
+
         <service
-            android:name=".LocalService"
+            android:name=".ForegroundService"
             android:enabled="true"
-            android:exported="true" />
-        <service
-            android:name=".RemoteService"
-            android:enabled="true"
-            android:exported="true"
-            android:process=":remote" />
-        <service
-            android:name=".JobSchedulerService"
-            android:permission="android.permission.BIND_JOB_SERVICE"
-            android:enabled="true"
-            android:exported="true" />
-        <service
-            android:name=".MyAccessibilityService"
-            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="android.accessibilityservice.AccessibilityService" />
-            </intent-filter>
-            <meta-data
-                android:name="android.accessibilityservice"
-                android:resource="@xml/accessibility_service_config" />
-        </service>
+            android:exported="false" />
+
     </application>
 </manifest>
