@@ -75,41 +75,84 @@ public class MainActivity extends AppCompatActivity {
         
         // 优化WebView设置
         WebSettings settings = webView.getSettings();
+        
+        // 基础设置 - 所有版本通用
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
         settings.setUseWideViewPort(true);
         settings.setLoadWithOverviewMode(true);
-        
-        // 更激进的缓存策略
         settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
-        settings.setAppCacheEnabled(false);
-        settings.setDatabaseEnabled(false); // 禁用数据库
-        settings.setGeolocationEnabled(false); // 禁用地理位置
-        settings.setSaveFormData(false); // 禁用表单数据保存
-        settings.setLoadsImagesAutomatically(true); // 允许自动加载图片
+        settings.setSaveFormData(false);
         
-        // 设置低内存模式
-        settings.setRenderPriority(WebSettings.RenderPriority.LOW);
-        
+        // 版本兼容性处理
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            // Android 5.0 (API 21) 及以上
             settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+            
+            // 设置更强的内存管理
+            try {
+                settings.setEnableSmoothTransition(false);
+            } catch (Exception e) {
+                Log.e(TAG, "设置平滑过渡失败", e);
+            }
         }
         
-        settings.setAllowFileAccess(true);
-        settings.setMediaPlaybackRequiresUserGesture(false);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            // Android 6.0 (API 23) 及以上
+            try {
+                settings.setOffscreenPreRaster(false); // 禁用离屏渲染
+            } catch (Exception e) {
+                Log.e(TAG, "设置离屏渲染失败", e);
+            }
+        }
+        
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // Android 8.0 (API 26) 及以上
+            try {
+                settings.setSafeBrowsingEnabled(false); // 禁用安全浏览
+            } catch (Exception e) {
+                Log.e(TAG, "设置安全浏览失败", e);
+            }
+        }
+
+        // 低版本Android的特殊处理
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            // Android 4.4及以下
+            try {
+                settings.setSavePassword(false);
+                settings.setAppCacheEnabled(false);
+                settings.setDatabaseEnabled(false);
+            } catch (Exception e) {
+                Log.e(TAG, "低版本设置失败", e);
+            }
+        }
+
+        try {
+            // 通用设置，但可能某些版本不支持
+            settings.setGeolocationEnabled(false);
+            settings.setLoadsImagesAutomatically(true);
+            settings.setRenderPriority(WebSettings.RenderPriority.LOW);
+            settings.setBlockNetworkImage(false); // 允许加载网络图片
+            settings.setNeedInitialFocus(false); // 禁用初始焦点
+        } catch (Exception e) {
+            Log.e(TAG, "通用设置失败", e);
+        }
         
         // 设置WebViewClient
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                view.loadUrl(url);
-                return true;
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+                    // 旧版本处理方式
+                    view.loadUrl(url);
+                    return true;
+                }
+                return false; // 新版本使用默认处理
             }
             
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-                // 页面加载完成后执行内存清理
                 clearWebViewMemory();
             }
         });
@@ -223,10 +266,15 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         if (webView != null) {
-            webView.onPause();
-            webView.pauseTimers();
-            // 暂停时释放更多内存
-            clearWebViewMemory();
+            try {
+                webView.onPause();
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                    webView.pauseTimers();
+                }
+                clearWebViewMemory();
+            } catch (Exception e) {
+                Log.e(TAG, "暂停WebView失败", e);
+            }
         }
     }
 
@@ -234,8 +282,14 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         if (webView != null) {
-            webView.onResume();
-            webView.resumeTimers();
+            try {
+                webView.onResume();
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                    webView.resumeTimers();
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "恢复WebView失败", e);
+            }
         }
     }
 
@@ -246,16 +300,21 @@ public class MainActivity extends AppCompatActivity {
         }
         
         if (webView != null) {
-            webView.stopLoading();
-            webView.clearHistory();
-            webView.clearCache(true);
-            webView.clearFormData();
-            webView.clearSslPreferences();
-            webView.destroy();
-            webView = null;
+            try {
+                webView.stopLoading();
+                webView.clearHistory();
+                webView.clearCache(true);
+                webView.clearFormData();
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    webView.clearSslPreferences();
+                }
+                webView.destroy();
+                webView = null;
+            } catch (Exception e) {
+                Log.e(TAG, "销毁WebView失败", e);
+            }
         }
         
-        // 强制清理
         System.gc();
         Runtime.getRuntime().gc();
         
@@ -419,41 +478,59 @@ public class MainActivity extends AppCompatActivity {
 
     private void clearWebViewMemory() {
         if (webView != null) {
-            webView.clearCache(true);
-            webView.clearHistory();
-            webView.clearFormData();
-            webView.clearSslPreferences();
-            
-            // 清理DOM存储
-            webView.getSettings().setDomStorageEnabled(false);
-            webView.getSettings().setDomStorageEnabled(true);
-            
-            // 执行JavaScript垃圾回收
-            webView.loadUrl("javascript:void(0)");
-            
-            // 触发垃圾回收
-            System.gc();
-            Runtime.getRuntime().gc();
+            try {
+                webView.clearCache(true);
+                webView.clearHistory();
+                webView.clearFormData();
+                
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    webView.clearSslPreferences();
+                }
+                
+                // 清理DOM存储
+                boolean originalDomStorage = webView.getSettings().getDomStorageEnabled();
+                webView.getSettings().setDomStorageEnabled(false);
+                webView.getSettings().setDomStorageEnabled(originalDomStorage);
+                
+                // 执行JavaScript垃圾回收
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                    webView.evaluateJavascript("javascript:void(0)", null);
+                } else {
+                    webView.loadUrl("javascript:void(0)");
+                }
+                
+                // 触发垃圾回收
+                System.gc();
+                Runtime.getRuntime().gc();
+            } catch (Exception e) {
+                Log.e(TAG, "清理内存失败", e);
+            }
         }
     }
 
     private void reloadWebView() {
         if (webView != null) {
-            Log.d(TAG, "执行WebView重载");
-            
-            // 保存当前URL
-            String currentUrl = webView.getUrl();
-            
-            // 清理所有资源
-            clearWebViewMemory();
-            
-            // 重新加载页面
-            if (currentUrl != null) {
-                webView.loadUrl(currentUrl);
+            try {
+                Log.d(TAG, "执行WebView重载");
+                String currentUrl = webView.getUrl();
+                
+                // 清理所有资源
+                clearWebViewMemory();
+                
+                // 重新加载页面
+                if (currentUrl != null) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                        // 使用更现代的加载方式
+                        webView.loadUrl(currentUrl, null);
+                    } else {
+                        webView.loadUrl(currentUrl);
+                    }
+                }
+                
+                showMessage("页面已刷新");
+            } catch (Exception e) {
+                Log.e(TAG, "重载页面失败", e);
             }
-            
-            // 显示提示
-            showMessage("页面已刷新");
         }
     }
 
