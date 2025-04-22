@@ -58,16 +58,40 @@ public class MainActivity extends AppCompatActivity {
     private int consecutiveLowMemoryCount = 0; // 连续低内存计数
     private static final int MAX_LOW_MEMORY_COUNT = 3; // 连续3次触发强制重载
 
-    @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // 设置崩溃处理器
+        Thread.setDefaultUncaughtExceptionHandler(new CrashHandler(this));
+        
         super.onCreate(savedInstanceState);
         //隐藏ActionBar
         Objects.requireNonNull(getSupportActionBar()).hide();
         setContentView(R.layout.activity_main);
         
+        // 保持屏幕常亮
+        getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        
+        // 请求忽略电池优化
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            try {
+                Intent intent = new Intent();
+                String packageName = getPackageName();
+                android.os.PowerManager pm = (android.os.PowerManager) getSystemService(Context.POWER_SERVICE);
+                if (!pm.isIgnoringBatteryOptimizations(packageName)) {
+                    intent.setAction(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                    intent.setData(android.net.Uri.parse("package:" + packageName));
+                    startActivity(intent);
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "请求忽略电池优化失败", e);
+            }
+        }
+        
         setupWebView();
         startMemoryMonitoring();
+        
+        // 启动守护服务
+        startTVService();
     }
 
     private void setupWebView() {
@@ -531,6 +555,29 @@ public class MainActivity extends AppCompatActivity {
             } catch (Exception e) {
                 Log.e(TAG, "重载页面失败", e);
             }
+        }
+    }
+
+    private void startTVService() {
+        Intent serviceIntent = new Intent(this, ForegroundService.class);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(serviceIntent);
+        } else {
+            startService(serviceIntent);
+        }
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) {
+            getWindow().getDecorView().setSystemUiVisibility(
+                android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                | android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                | android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                | android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                | android.view.View.SYSTEM_UI_FLAG_FULLSCREEN
+                | android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
         }
     }
 

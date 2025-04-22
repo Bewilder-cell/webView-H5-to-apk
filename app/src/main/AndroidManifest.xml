@@ -3,46 +3,75 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.example.test">
 
+    <uses-permission android:name='android.permission.INTERNET'
+        tools:ignore="ManifestOrder,WrongManifestParent" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.BIND_ACCESSIBILITY_SERVICE" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+    <!-- 声明这是一个TV应用 -->
+    <uses-feature
+        android:name="android.software.leanback"
+        android:required="true" />
+    <uses-feature
+        android:name="android.hardware.touchscreen"
+        android:required="false" />
+
     <application
+        android:name=".MyApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
+        android:banner="@drawable/app_banner"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Hyoa"
+        android:theme="@style/Theme.Leanback"
         android:usesCleartextTraffic="true"
+        android:largeHeap="true"
+        android:hardwareAccelerated="false"
+        android:persistent="true"
         tools:targetApi="m">
         <activity
             android:name=".MainActivity"
-            android:label="@string/app_name">
+            android:launchMode="singleTask"
+            android:exported="true"
+            android:screenOrientation="landscape"
+            android:configChanges="keyboard|keyboardHidden|navigation"
+            android:defaultToDeviceProtectedStorage="true"
+            android:directBootAware="true">
             <intent-filter>
-                         <!-- 标记为主入口 -->
                 <action android:name="android.intent.action.MAIN" />
-                
-                <!-- 让应用在普通 Android 设备上可见 -->
-                <category android:name="android.intent.category.LAUNCHER" />
-        
-                <!-- 让应用在 Android TV 上可见 -->
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
-        
-                <!-- 让应用变成默认桌面（这样电视开机后可以直接进入你的应用） -->
                 <category android:name="android.intent.category.HOME" />
                 <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <service
             android:name=".ForegroundService"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="location" />
+            android:directBootAware="true" />
             
         <receiver
             android:name=".BootReceiver"
+            android:directBootAware="true"
             android:enabled="true"
             android:exported="true">
-            <intent-filter>
+            <intent-filter android:priority="999">
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.USER_PRESENT" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </receiver>
         <service
@@ -71,18 +100,4 @@
                 android:resource="@xml/accessibility_service_config" />
         </service>
     </application>
-    <uses-permission android:name='android.permission.INTERNET'
-        tools:ignore="ManifestOrder,WrongManifestParent" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        tools:ignore="ScopedStorage" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
-    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
-    <uses-permission android:name="android.permission.BIND_ACCESSIBILITY_SERVICE" />
 </manifest>
