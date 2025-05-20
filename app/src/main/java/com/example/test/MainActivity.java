@@ -114,7 +114,7 @@ public class MainActivity extends AppCompatActivity {
         startMemoryMonitoring();
         
         // 启动守护服务
-        startTVService();
+        // startTVService();
     }
 
     private void setupWebView() {
@@ -269,7 +269,7 @@ public class MainActivity extends AppCompatActivity {
 
         // 这里填你需要打包的 H5 页面链接，并附加时间戳参数
        // String url = "http://10.114.136.173:8082/#/pages/views/pickTemplate/pickStateTWSB?t=" + timestamp;
-        String url = "https://www.baidu.com?t=" + timestamp;
+        String url = "https://www.baidu.com";
 
 
         // 这里填你需要打包的 H5 页面链接
@@ -606,20 +606,20 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    public boolean dispatchKeyEvent(KeyEvent event) {
-        // 处理TV遥控器按键
-        if (event.getAction() == KeyEvent.ACTION_DOWN) {
-            switch (event.getKeyCode()) {
-                case KeyEvent.KEYCODE_BACK:
-                    // 拦截返回键，防止退出应用
-                    return true;
-                case KeyEvent.KEYCODE_HOME:
-                    // 拦截Home键
-                    return true;
-            }
-        }
-        return super.dispatchKeyEvent(event);
-    }
+    // @Override
+    // public boolean dispatchKeyEvent(KeyEvent event) {
+    //     // 处理TV遥控器按键
+    //     if (event.getAction() == KeyEvent.ACTION_DOWN) {
+    //         switch (event.getKeyCode()) {
+    //             case KeyEvent.KEYCODE_BACK:
+    //                 // 拦截返回键，防止退出应用
+    //                 return true;
+    //             case KeyEvent.KEYCODE_HOME:
+    //                 // 拦截Home键
+    //                 return true;
+    //         }
+    //     }
+    //     return super.dispatchKeyEvent(event);
+    // }
 
 }
