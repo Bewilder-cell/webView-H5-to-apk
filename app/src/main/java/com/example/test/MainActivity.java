@@ -56,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
     private Handler memoryCheckHandler;
     private static final long MEMORY_CHECK_INTERVAL = 5000; // 缩短到5秒检查一次
     private static final String TAG = "MainActivity";
-    private static final long AUTO_RELOAD_INTERVAL = 3600000; // 1小时自动重载一次
+    private static final long AUTO_RELOAD_INTERVAL = 3600000*8; // 8小时自动重载一次
     private int consecutiveLowMemoryCount = 0; // 连续低内存计数
     private static final int MAX_LOW_MEMORY_COUNT = 3; // 连续3次触发强制重载
 
