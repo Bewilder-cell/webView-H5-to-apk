@@ -56,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
         Objects.requireNonNull(getSupportActionBar()).hide();
         setContentView(R.layout.activity_main);
         // 初始化电视保活
-        TVKeepAliveManager.initKeepAlive(this);
+       // TVKeepAliveManager.initKeepAlive(this);
                             // 添加测试崩溃按钮
                     Button crashButton = new Button(this);
                     crashButton.setText("测试崩溃");
