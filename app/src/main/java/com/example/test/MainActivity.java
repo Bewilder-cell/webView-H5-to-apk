@@ -36,6 +36,9 @@ import android.app.job.JobInfo;
 import android.app.job.JobScheduler;
 import android.content.ComponentName;
 import android.util.Log;
+import android.widget.Button;
+import android.widget.FrameLayout;
+import android.view.Gravity;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -54,6 +57,26 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         // 初始化电视保活
         TVKeepAliveManager.initKeepAlive(this);
+                            // 添加测试崩溃按钮
+                    Button crashButton = new Button(this);
+                    crashButton.setText("测试崩溃");
+                    crashButton.setOnClickListener(v -> {
+                        // 触发崩溃
+                        throw new RuntimeException("测试崩溃");
+                    });
+                    
+                    // 设置按钮位置（右上角）
+                    FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                        FrameLayout.LayoutParams.WRAP_CONTENT,
+                        FrameLayout.LayoutParams.WRAP_CONTENT
+                    );
+                    params.gravity = Gravity.TOP | Gravity.END;
+                    params.setMargins(0, 50, 50, 0);
+                    crashButton.setLayoutParams(params);
+        
+        // 将按钮添加到布局中
+        ((FrameLayout) findViewById(android.R.id.content)).addView(crashButton);
+
         //WebView加载页面
         webView = findViewById(R.id.web_view);
         webView.getSettings().setJavaScriptEnabled(true);
