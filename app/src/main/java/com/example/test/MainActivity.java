@@ -52,6 +52,8 @@ public class MainActivity extends AppCompatActivity {
         //隐藏ActionBar
         Objects.requireNonNull(getSupportActionBar()).hide();
         setContentView(R.layout.activity_main);
+        // 初始化电视保活
+        TVKeepAliveManager.initKeepAlive(this);
         //WebView加载页面
         webView = findViewById(R.id.web_view);
         webView.getSettings().setJavaScriptEnabled(true);
