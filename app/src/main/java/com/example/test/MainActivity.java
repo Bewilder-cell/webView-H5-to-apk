@@ -36,9 +36,8 @@ import android.app.job.JobInfo;
 import android.app.job.JobScheduler;
 import android.content.ComponentName;
 import android.util.Log;
-import android.widget.Button;
-import android.widget.FrameLayout;
-import android.view.Gravity;
+import android.Manifest;
+import android.content.pm.PackageManager;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -52,7 +51,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-                        // 检查并请求必要权限
+                // 检查并请求必要权限
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             String[] permissions = {
                 Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -67,14 +66,11 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
-          //初始化崩溃后自启动
+        //初始化崩溃后自启动
         Thread.setDefaultUncaughtExceptionHandler(new CrashHandler(this));
         //隐藏ActionBar
         Objects.requireNonNull(getSupportActionBar()).hide();
         setContentView(R.layout.activity_main);
-        // 初始化电视保活
-        TVKeepAliveManager.initKeepAlive(this);
-
         //WebView加载页面
         webView = findViewById(R.id.web_view);
         webView.getSettings().setJavaScriptEnabled(true);
@@ -168,8 +164,8 @@ public class MainActivity extends AppCompatActivity {
 long timestamp = System.currentTimeMillis();
 
 // 这里填你需要打包的 H5 页面链接，并附加时间戳参数
-String url = "https://www.baidu.com";
-
+ String url = "http://172.16.102.55:8082/#/";
+        // String url = "https://www.baidu.com";
         // 这里填你需要打包的 H5 页面链接
         webView.loadUrl(url);
 
