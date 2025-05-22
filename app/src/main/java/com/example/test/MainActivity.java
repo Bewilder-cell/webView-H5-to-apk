@@ -52,20 +52,21 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         //         // 检查并请求必要权限
-        // if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-        //     String[] permissions = {
-        //         Manifest.permission.WRITE_EXTERNAL_STORAGE,
-        //         Manifest.permission.READ_EXTERNAL_STORAGE,
-        //         Manifest.permission.POST_NOTIFICATIONS
-        //     };
-            
-        //     for (String permission : permissions) {
-        //         if (checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED) {
-        //             requestPermissions(permissions, 1);
-        //             break;
-        //         }
-        //     }
-        // }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            List<String> permissionsList = new ArrayList<>();
+            permissionsList.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+            permissionsList.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                permissionsList.add(Manifest.permission.POST_NOTIFICATIONS);
+            }
+            for (String permission : permissionsList) {
+                if (checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED) {
+                    requestPermissions(permissionsList.toArray(new String[0]), 1);
+                    break;
+                }
+            }
+        }
+
         //初始化崩溃后自启动
         Thread.setDefaultUncaughtExceptionHandler(new CrashHandler(this));
         //隐藏ActionBar
