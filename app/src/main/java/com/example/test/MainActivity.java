@@ -50,6 +50,12 @@ public class MainActivity extends AppCompatActivity {
     private static final int JOB_ID = 100;
 
     @SuppressLint("SetJavaScriptEnabled")
+    private void restartApp() {
+    Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+    getApplicationContext().startActivity(intent);
+    android.os.Process.killProcess(android.os.Process.myPid()); // 杀掉原进程
+}
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -111,12 +117,6 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 handleup(filePathCallback);
                 return true;
             }
-private void restartApp() {
-    Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-    getApplicationContext().startActivity(intent);
-    android.os.Process.killProcess(android.os.Process.myPid()); // 杀掉原进程
-}
             private void handle(ValueCallback<Uri> uploadFile) {
                 Intent intent = new Intent(Intent.ACTION_PICK);
                 // 设置允许上传的文件类型
