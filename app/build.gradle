@@ -3,8 +3,8 @@ plugins {
 }
 
 android {
+    namespace 'com.example.test' // 建议添加 namespace，新版 Android Gradle Plugin 要求
     compileSdkVersion 33
-    buildToolsVersion "33.0.0"
 
     defaultConfig {
         applicationId "com.example.test"
@@ -12,9 +12,7 @@ android {
         targetSdkVersion 33
         versionCode 1
         versionName "1.0"
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-
         vectorDrawables.useSupportLibrary = true
     }
 
@@ -24,12 +22,14 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
 
-    lintOptions {
+    // Lint 配置已迁移到 lint { ... }
+    lint {
         checkReleaseBuilds false
         abortOnError false
     }
