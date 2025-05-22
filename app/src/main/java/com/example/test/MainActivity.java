@@ -74,7 +74,13 @@ public class MainActivity extends AppCompatActivity {
                 handleup(filePathCallback);
                 return true;
             }
-
+           //webview重启app
+            private void restartApp() {
+    Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+    getApplicationContext().startActivity(intent);
+    android.os.Process.killProcess(android.os.Process.myPid()); // 杀掉原进程
+}
             private void handle(ValueCallback<Uri> uploadFile) {
                 Intent intent = new Intent(Intent.ACTION_PICK);
                 // 设置允许上传的文件类型
@@ -139,6 +145,12 @@ public class MainActivity extends AppCompatActivity {
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
                 view.loadUrl(url);
                 return true;
+            }
+                // 渲染进程崩溃（Android 7.0+）
+            @Override
+            public void onRenderProcessGone(WebView view, RenderProcessGoneDetail detail) {
+                Log.e("WebView", "渲染进程崩溃，是否被杀: " + detail.didCrash());
+                restartApp(); // WebView 崩溃时重启
             }
         });
         // 获取当前时间戳
