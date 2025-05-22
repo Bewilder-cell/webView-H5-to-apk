@@ -146,13 +146,13 @@ public class MainActivity extends AppCompatActivity {
                 view.loadUrl(url);
                 return true;
             }
-                // 渲染进程崩溃（Android 7.0+）
-            @Override
-            public void onRenderProcessGone(WebView view, RenderProcessGoneDetail detail) {
-                Log.e("WebView", "渲染进程崩溃，是否被杀: " + detail.didCrash());
-                restartApp(); // WebView 崩溃时重启
-            }
-        });
+        //         // 渲染进程崩溃（Android 7.0+）
+        //     @Override
+        //     public void onRenderProcessGone(WebView view, RenderProcessGoneDetail detail) {
+        //         Log.e("WebView", "渲染进程崩溃，是否被杀: " + detail.didCrash());
+        //         restartApp(); // WebView 崩溃时重启
+        //     }
+        // });
         // 获取当前时间戳
 long timestamp = System.currentTimeMillis();
 
