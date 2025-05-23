@@ -91,31 +91,26 @@ public class MainActivity extends AppCompatActivity {
         }
         // 检查并请求必要权限
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            List<String> permissionsList = new ArrayList<>();
-            permissionsList.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-            permissionsList.add(Manifest.permission.READ_EXTERNAL_STORAGE);
-
-            // 兼容 Android 13+ 通知权限（通过反射方式，避免低版本编译失败）
-            if (Build.VERSION.SDK_INT >= 33) {
-                try {
-                    String postNotifications = (String) Manifest.permission.class
-                            .getField("POST_NOTIFICATIONS")
-                            .get(null);
-                    permissionsList.add(postNotifications);
-                } catch (Exception e) {
-                    e.printStackTrace(); // 忽略字段不存在异常
+            List<String> permissionsToRequest = new ArrayList<>();
+            
+            // 存储权限（Android 6.0+）
+            if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+            }
+            if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+            }
+        
+            // 通知权限（仅Android 13+）
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                    permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS);
                 }
             }
-
-            List<String> toRequest = new ArrayList<>();
-            for (String permission : permissionsList) {
-                if (checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED) {
-                    toRequest.add(permission);
-                }
-            }
-
-            if (!toRequest.isEmpty()) {
-                requestPermissions(toRequest.toArray(new String[0]), 1);
+        
+            // 请求未授予的权限
+            if (!permissionsToRequest.isEmpty()) {
+                requestPermissions(permissionsToRequest.toArray(new String[0]), 1);
             }
         }
 
