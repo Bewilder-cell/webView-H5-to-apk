@@ -83,6 +83,12 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
+        long lastCrash = prefs.getLong(KEY_LAST_CRASH_TIME, 0);
+        if (System.currentTimeMillis() - lastCrash < 60000*30 ) {
+            // 上次崩溃在 30 分钟内，不再初始化 WebView 或直接 finish()
+            Log.e("MainActivity", "Detected frequent crash, exiting.");
+            finish();
+        }
         // 检查并请求必要权限
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             List<String> permissionsList = new ArrayList<>();
