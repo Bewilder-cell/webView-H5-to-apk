@@ -5,16 +5,18 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Process;
 import android.util.Log;
+import android.os.Handler;
+import android.os.Looper;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
+import android.os.SystemClock;
 
 public class CrashHandler implements Thread.UncaughtExceptionHandler {
     private static final String TAG = "CrashHandler";
-
     private static final String PREFS_NAME = "crash_prefs";
     private static final String KEY_LAST_CRASH_TIME = "last_crash_time";
-    // 设置冷却时间，单位毫秒，比如 10 秒内不重启，避免死循环
-    private static final long RESTART_COOLDOWN_MS = 10 * 1000;
+    private static final long RESTART_COOLDOWN_MS = 5 * 1000; // 5秒冷却时间
+    private static final int RESTART_DELAY_MS = 500; // 500毫秒重启延时
 
     private Context context;
     private Thread.UncaughtExceptionHandler defaultHandler;
@@ -30,19 +32,17 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
 
         try {
             if (shouldRestart()) {
-                restartApp();
+                restartAppImmediately();
             } else {
                 Log.e(TAG, "App crashed too frequently, will not restart to avoid loop.");
             }
         } catch (Exception e) {
             Log.e(TAG, "Error during crash handling", e);
         } finally {
-            // 最后才调用系统默认处理器
             if (defaultHandler != null) {
                 defaultHandler.uncaughtException(thread, ex);
             } else {
                 Process.killProcess(Process.myPid());
-                System.exit(1);
             }
         }
     }
@@ -53,39 +53,56 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
         long now = System.currentTimeMillis();
 
         if (now - lastCrash < RESTART_COOLDOWN_MS) {
-            // 距离上次崩溃时间小于冷却时间，不重启
             return false;
         }
 
-        // 记录这次崩溃时间
         prefs.edit().putLong(KEY_LAST_CRASH_TIME, now).apply();
         return true;
     }
 
-private void restartApp() {
-    Log.i(TAG, "Restarting app...");
-    try {
-        // 使用 AlarmManager 来确保重启
-        Intent intent = new Intent(context, MainActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+    private void restartAppImmediately() {
+        Log.i(TAG, "Restarting app immediately...");
         
-        PendingIntent pendingIntent = PendingIntent.getActivity(
-            context,
-            0,
-            intent,
-            PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE
-        );
-
-        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        if (alarmManager != null) {
-            alarmManager.setExactAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP,
-                System.currentTimeMillis() + 2000,
-                pendingIntent
-            );
+        // 方法1：直接启动（最快）
+        try {
+            Intent intent = new Intent(context, MainActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            context.startActivity(intent);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to restart immediately", e);
         }
-    } catch (Exception e) {
-        Log.e(TAG, "Failed to restart app", e);
+
+        // 方法2：使用 AlarmManager（备用方案）
+        try {
+            Intent intent = new Intent(context, MainActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            
+            PendingIntent pendingIntent = PendingIntent.getActivity(
+                context,
+                0,
+                intent,
+                PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE
+            );
+
+            AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+            if (alarmManager != null) {
+                alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    SystemClock.elapsedRealtime() + RESTART_DELAY_MS,
+                    pendingIntent
+                );
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to restart with AlarmManager", e);
+        }
+
+        // 方法3：使用广播（最后的备用方案）
+        try {
+            Intent intent = new Intent("com.example.test.RESTART_APP");
+            intent.setPackage(context.getPackageName());
+            context.sendBroadcast(intent);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to restart with broadcast", e);
+        }
     }
-}
 }
