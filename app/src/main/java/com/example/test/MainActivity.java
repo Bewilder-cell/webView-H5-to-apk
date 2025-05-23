@@ -66,7 +66,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
          // 注册崩溃处理器
-    Thread.setDefaultUncaughtExceptionHandler(new CrashHandler(getApplicationContext()));
+        Thread.setDefaultUncaughtExceptionHandler(new CrashHandler(getApplicationContext()));
         // 注册重启广播接收器
         registerRestartReceiver();
         
@@ -219,18 +219,6 @@ public class MainActivity extends AppCompatActivity {
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setMediaPlaybackRequiresUserGesture(false);
 
-       // 启动前台服务
-        Intent serviceIntent = new Intent(this, ForegroundService.class);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(serviceIntent);
-        } else {
-            startService(serviceIntent);
-        }
-
-        webView.loadUrl("javascript:(function() { " +
-            "var audio = document.getElementById('alarmSound');" +
-            "audio.load();" +
-            "})()");
     }
 
     private void registerRestartReceiver() {
@@ -305,8 +293,13 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception e) {
             // 忽略未注册的异常
         }
-        webView.destroy();
-        webView = null;
+        if (webView != null) {
+            webView.loadUrl("about:blank");
+            webView.clearHistory();
+            ((ViewGroup) webView.getParent()).removeView(webView);
+            webView.destroy();
+            webView = null;
+        }
     }
 
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
