@@ -201,7 +201,7 @@ public class MainActivity extends AppCompatActivity {
         long timestamp = System.currentTimeMillis();
 
         // 这里填你需要打包的 H5 页面链接，并附加时间戳参数
-        String url = "http://192.168.1.5:8080/";
+        String url = "http://10.84.4.173:8080/";
         webView.loadUrl(url);
 
         //显示一些小图片（头像）
