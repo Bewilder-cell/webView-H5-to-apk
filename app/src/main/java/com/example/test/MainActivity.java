@@ -175,6 +175,7 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 // 渲染进程崩溃（Android 7.0+）
  
         });
+
         // 获取当前时间戳
 long timestamp = System.currentTimeMillis();
 
