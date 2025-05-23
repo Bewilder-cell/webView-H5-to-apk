@@ -136,35 +136,6 @@ public class MainActivity extends AppCompatActivity {
                 requestPermissionsIfNeeded();
             }
         }, 5000); // 延迟5秒
-        private void requestPermissionsIfNeeded() {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                List<String> permissionsList = new ArrayList<>();
-                permissionsList.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-                permissionsList.add(Manifest.permission.READ_EXTERNAL_STORAGE);
-
-                if (Build.VERSION.SDK_INT >= 33) {
-                    try {
-                        String postNotifications = (String) Manifest.permission.class
-                                .getField("POST_NOTIFICATIONS")
-                                .get(null);
-                        permissionsList.add(postNotifications);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-
-                List<String> toRequest = new ArrayList<>();
-                for (String permission : permissionsList) {
-                    if (checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED) {
-                        toRequest.add(permission);
-                    }
-                }
-
-                if (!toRequest.isEmpty()) {
-                    requestPermissions(toRequest.toArray(new String[0]), 1);
-                }
-            }
-        }
         // code from https://blog.csdn.net/qq_21138819/article/details/56676007 by 欢子-3824
         webView.setWebChromeClient(new WebChromeClient() {
             // Andorid 4.1----4.4
@@ -255,6 +226,36 @@ public class MainActivity extends AppCompatActivity {
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setMediaPlaybackRequiresUserGesture(false);
 
+    }
+    // ✅ 正确位置
+    private void requestPermissionsIfNeeded() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        List<String> permissionsList = new ArrayList<>();
+        permissionsList.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        permissionsList.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+
+        if (Build.VERSION.SDK_INT >= 33) {
+            try {
+                String postNotifications = (String) Manifest.permission.class
+                        .getField("POST_NOTIFICATIONS")
+                        .get(null);
+                permissionsList.add(postNotifications);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        List<String> toRequest = new ArrayList<>();
+        for (String permission : permissionsList) {
+            if (checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED) {
+                toRequest.add(permission);
+            }
+        }
+
+        if (!toRequest.isEmpty()) {
+            requestPermissions(toRequest.toArray(new String[0]), 1);
+        }
+    }
     }
 
     private void registerRestartReceiver() {
