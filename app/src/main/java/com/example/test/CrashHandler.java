@@ -26,19 +26,22 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
     public void uncaughtException(Thread thread, Throwable ex) {
         Log.e(TAG, "App crashed, handling uncaught exception...", ex);
 
-        if (shouldRestart()) {
-            restartApp();
-        } else {
-            Log.e(TAG, "App crashed too frequently, will not restart to avoid loop.");
-        }
-
-        // 调用系统默认处理器（会杀掉进程）
-        if (defaultHandler != null) {
-            defaultHandler.uncaughtException(thread, ex);
-        } else {
-            // 如果没有默认处理器，则手动结束进程
-            Process.killProcess(Process.myPid());
-            System.exit(1);
+        try {
+            if (shouldRestart()) {
+                restartApp();
+            } else {
+                Log.e(TAG, "App crashed too frequently, will not restart to avoid loop.");
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error during crash handling", e);
+        } finally {
+            // 最后才调用系统默认处理器
+            if (defaultHandler != null) {
+                defaultHandler.uncaughtException(thread, ex);
+            } else {
+                Process.killProcess(Process.myPid());
+                System.exit(1);
+            }
         }
     }
 
@@ -65,14 +68,15 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
 
         try {
             context.startActivity(intent);
-            // 延迟杀进程，确保 Activity 能启动
-            Thread.sleep(2000);
+            // 使用 Handler 处理延迟
+            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                Process.killProcess(Process.myPid());
+                System.exit(1);
+            }, 2000);
         } catch (Exception e) {
             Log.e(TAG, "Failed to restart app", e);
+            Process.killProcess(Process.myPid());
+            System.exit(1);
         }
-
-        // 杀死当前进程
-        Process.killProcess(Process.myPid());
-        System.exit(1);
     }
 }
