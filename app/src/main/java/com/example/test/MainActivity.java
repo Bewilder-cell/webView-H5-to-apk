@@ -1,6 +1,7 @@
 package com.example.test;
 import java.util.ArrayList;
 import java.util.List;
+import android.view.ViewGroup;
 import android.annotation.SuppressLint;
 import android.app.DownloadManager;
 import android.content.BroadcastReceiver;
