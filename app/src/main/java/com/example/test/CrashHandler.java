@@ -90,13 +90,6 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
             Log.w(TAG, "Too soon since last crash");
             return false;
         }
-        if (System.currentTimeMillis() - lastCrash < 60000*30 ) {
-            // 上次崩溃在 1 分钟内，不再初始化 WebView 或直接 finish()
-            Log.e("MainActivity", "Detected frequent crash, exiting.");
-            finish();
-        }
-
-
         // 更新崩溃时间和计数
         prefs.edit()
             .putLong(KEY_LAST_CRASH_TIME, now)
