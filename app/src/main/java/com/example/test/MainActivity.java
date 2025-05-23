@@ -53,35 +53,39 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //         // 检查并请求必要权限
-if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-    List<String> permissionsList = new ArrayList<>();
-    permissionsList.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-    permissionsList.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+        // 检查并请求必要权限
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            List<String> permissionsList = new ArrayList<>();
+            permissionsList.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+            permissionsList.add(Manifest.permission.READ_EXTERNAL_STORAGE);
 
-    // 兼容 Android 13+ 通知权限（通过反射方式，避免低版本编译失败）
-    if (Build.VERSION.SDK_INT >= 33) {
-        try {
-            String postNotifications = (String) Manifest.permission.class
-                    .getField("POST_NOTIFICATIONS")
-                    .get(null);
-            permissionsList.add(postNotifications);
-        } catch (Exception e) {
-            e.printStackTrace(); // 忽略字段不存在异常
+            // 兼容 Android 13+ 通知权限（通过反射方式，避免低版本编译失败）
+            if (Build.VERSION.SDK_INT >= 33) {
+                try {
+                    String postNotifications = (String) Manifest.permission.class
+                            .getField("POST_NOTIFICATIONS")
+                            .get(null);
+                    permissionsList.add(postNotifications);
+                } catch (Exception e) {
+                    e.printStackTrace(); // 忽略字段不存在异常
+                }
+            }
+
+            List<String> toRequest = new ArrayList<>();
+            for (String permission : permissionsList) {
+                if (checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED) {
+                    toRequest.add(permission);
+                }
+            }
+
+            if (!toRequest.isEmpty()) {
+                requestPermissions(toRequest.toArray(new String[0]), 1);
+            }
         }
-    }
 
-    List<String> toRequest = new ArrayList<>();
-    for (String permission : permissionsList) {
-        if (checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED) {
-            toRequest.add(permission);
-        }
-    }
 
-    if (!toRequest.isEmpty()) {
-        requestPermissions(toRequest.toArray(new String[0]), 1);
-    }
-}
+        //初始化崩溃后自启动
+        Thread.setDefaultUncaughtExceptionHandler(new CrashHandler(this));
         //隐藏ActionBar
         Objects.requireNonNull(getSupportActionBar()).hide();
         setContentView(R.layout.activity_main);
@@ -175,12 +179,11 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 // 渲染进程崩溃（Android 7.0+）
  
         });
-
         // 获取当前时间戳
-long timestamp = System.currentTimeMillis();
+        long timestamp = System.currentTimeMillis();
 
-// 这里填你需要打包的 H5 页面链接，并附加时间戳参数
- // String url = "http://172.16.102.55:8082/#/";
+        // 这里填你需要打包的 H5 页面链接，并附加时间戳参数
+        // String url = "http://172.16.102.55:8082/#/";
         String url = "http://192.168.1.5:8080/";
         // 这里填你需要打包的 H5 页面链接
         webView.loadUrl(url);
