@@ -65,7 +65,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
+         // 注册崩溃处理器
+    Thread.setDefaultUncaughtExceptionHandler(new CrashHandler(getApplicationContext()));
         // 注册重启广播接收器
         registerRestartReceiver();
         
