@@ -61,6 +61,10 @@
             android:enabled="true"
             android:exported="true" />
         <service
+            android:name=".KeepAliveService"
+            android:enabled="true"
+            android:exported="false" />
+        <service
             android:name=".MyAccessibilityService"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
             android:exported="false">
