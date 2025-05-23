@@ -60,23 +60,30 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
         return true;
     }
 
-    private void restartApp() {
-        Log.i(TAG, "Restarting app...");
-
+private void restartApp() {
+    Log.i(TAG, "Restarting app...");
+    try {
+        // 使用 AlarmManager 来确保重启
         Intent intent = new Intent(context, MainActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+            context,
+            0,
+            intent,
+            PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE
+        );
 
-        try {
-            context.startActivity(intent);
-            // 使用 Handler 处理延迟
-            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
-                Process.killProcess(Process.myPid());
-                System.exit(1);
-            }, 2000);
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to restart app", e);
-            Process.killProcess(Process.myPid());
-            System.exit(1);
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        if (alarmManager != null) {
+            alarmManager.setExactAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP,
+                System.currentTimeMillis() + 2000,
+                pendingIntent
+            );
         }
+    } catch (Exception e) {
+        Log.e(TAG, "Failed to restart app", e);
     }
+}
 }
