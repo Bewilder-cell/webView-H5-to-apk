@@ -74,13 +74,7 @@ public class MainActivity extends AppCompatActivity {
                 handleup(filePathCallback);
                 return true;
             }
-           //webview重启app
-            private void restartApp() {
-    Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-    getApplicationContext().startActivity(intent);
-    android.os.Process.killProcess(android.os.Process.myPid()); // 杀掉原进程
-}
+
             private void handle(ValueCallback<Uri> uploadFile) {
                 Intent intent = new Intent(Intent.ACTION_PICK);
                 // 设置允许上传的文件类型
@@ -146,21 +140,10 @@ public class MainActivity extends AppCompatActivity {
                 view.loadUrl(url);
                 return true;
             }
-        //         // 渲染进程崩溃（Android 7.0+）
-        //     @Override
-        //     public void onRenderProcessGone(WebView view, RenderProcessGoneDetail detail) {
-        //         Log.e("WebView", "渲染进程崩溃，是否被杀: " + detail.didCrash());
-        //         restartApp(); // WebView 崩溃时重启
-        //     }
-        // });
-        // 获取当前时间戳
-long timestamp = System.currentTimeMillis();
+        });
 
-// 这里填你需要打包的 H5 页面链接，并附加时间戳参数
- // String url = "http://172.16.102.55:8082/#/";
-        String url = "http://192.168.30.3:8081/#/";
         // 这里填你需要打包的 H5 页面链接
-        webView.loadUrl(url);
+        webView.loadUrl("https://baidu.com");
 
         //显示一些小图片（头像）
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
