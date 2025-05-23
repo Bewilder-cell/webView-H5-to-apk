@@ -11,10 +11,11 @@ import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
-//import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.PowerManager;
 import android.provider.MediaStore;
+import android.provider.Settings;
 import android.view.KeyEvent;
 import android.webkit.CookieManager;
 import android.webkit.DownloadListener;
@@ -40,8 +41,6 @@ import android.content.ComponentName;
 import android.util.Log;
 import android.Manifest;
 import android.content.pm.PackageManager;
-import android.os.PowerManager;
-import android.provider.Settings;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -51,12 +50,24 @@ public class MainActivity extends AppCompatActivity {
     ValueCallback<Uri[]> mFilePathCallbackArray;
     private static final int JOB_ID = 100;
 
+    private BroadcastReceiver restartReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if ("com.example.test.RESTART_APP".equals(intent.getAction())) {
+                Intent restartIntent = new Intent(context, MainActivity.class);
+                restartIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(restartIntent);
+            }
+        }
+    };
+
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // 启动保活服务
-        startService(new Intent(this, KeepAliveService.class));
+        
+        // 注册重启广播接收器
+        registerRestartReceiver();
         
         // 请求忽略电池优化
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -69,6 +80,7 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         }
+
         // 检查并请求必要权限
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             List<String> permissionsList = new ArrayList<>();
@@ -99,21 +111,28 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-
         //初始化崩溃后自启动
         Thread.setDefaultUncaughtExceptionHandler(new CrashHandler(this));
+        
+        // 初始化电视保活
+        TVKeepAliveManager.initKeepAlive(this);
+        
         //隐藏ActionBar
         Objects.requireNonNull(getSupportActionBar()).hide();
         setContentView(R.layout.activity_main);
+        
+        // 启动所有保活服务
+        startKeepAliveServices();
+        
         //WebView加载页面
         webView = findViewById(R.id.web_view);
         webView.getSettings().setJavaScriptEnabled(true);
         webView.setWebViewClient(new WebViewClient());
+        
         // code from https://blog.csdn.net/qq_21138819/article/details/56676007 by 欢子-3824
         webView.setWebChromeClient(new WebChromeClient() {
             // Andorid 4.1----4.4
             public void openFileChooser(ValueCallback<Uri> uploadFile, String acceptType, String capture) {
-
                 mFilePathCallback = uploadFile;
                 handle(uploadFile);
             }
@@ -127,6 +146,7 @@ public class MainActivity extends AppCompatActivity {
                 handleup(filePathCallback);
                 return true;
             }
+            
             private void handle(ValueCallback<Uri> uploadFile) {
                 Intent intent = new Intent(Intent.ACTION_PICK);
                 // 设置允许上传的文件类型
@@ -142,47 +162,30 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // wevView监听 H5 页面的下载事件
-        // code from https://github.com/madhan98/Android-webview-upload-download/blob/master/app/src/main/java/com/my/newproject/MainActivity.java by Madhan
         webView.setDownloadListener(new DownloadListener() {
-
             public void onDownloadStart(String url, String userAgent, String contentDisposition, String mimetype, long contentLength) {
-
                 DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
-
                 String cookies = CookieManager.getInstance().getCookie(url);
-
                 request.addRequestHeader("cookie", cookies);
-
                 request.addRequestHeader("User-Agent", userAgent);
-
                 request.setDescription("下载中...");
-
                 request.setTitle(URLUtil.guessFileName(url, contentDisposition, mimetype));
-
-                request.allowScanningByMediaScanner(); request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED); request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, URLUtil.guessFileName(url, contentDisposition, mimetype));
-
+                request.allowScanningByMediaScanner();
+                request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+                request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, URLUtil.guessFileName(url, contentDisposition, mimetype));
                 DownloadManager manager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
-
                 manager.enqueue(request);
-
                 showMessage("下载中...");
 
                 //Notif if success
-
                 BroadcastReceiver onComplete = new BroadcastReceiver() {
-
                     public void onReceive(Context ctxt, Intent intent) {
-
                         showMessage("下载完成");
-
                         unregisterReceiver(this);
-
-                    }};
-
+                    }
+                };
                 registerReceiver(onComplete, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
-
             }
-
         });
 
         //该方法解决的问题是打开浏览器不调用系统浏览器，直接用 webView 打开
@@ -192,16 +195,13 @@ public class MainActivity extends AppCompatActivity {
                 view.loadUrl(url);
                 return true;
             }
-                // 渲染进程崩溃（Android 7.0+）
- 
         });
+
         // 获取当前时间戳
         long timestamp = System.currentTimeMillis();
 
         // 这里填你需要打包的 H5 页面链接，并附加时间戳参数
-        // String url = "http://172.16.102.55:8082/#/";
-        String url = "http://10.84.4.173:8080/";
-        // 这里填你需要打包的 H5 页面链接
+        String url = "http://192.168.1.5:8080/";
         webView.loadUrl(url);
 
         //显示一些小图片（头像）
@@ -226,95 +226,19 @@ public class MainActivity extends AppCompatActivity {
             "})()");
     }
 
-    //设置回退页面
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if ((keyCode == KeyEvent.KEYCODE_BACK) && webView.canGoBack()) {
-            webView.goBack();
-            return true;
-        }
-        return super.onKeyDown(keyCode, event);
+    private void registerRestartReceiver() {
+        IntentFilter filter = new IntentFilter("com.example.test.RESTART_APP");
+        registerReceiver(restartReceiver, filter);
     }
 
-    @Deprecated
-    public void showMessage(String _s) {
-        Toast.makeText(getApplicationContext(), _s, Toast.LENGTH_SHORT).show();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        webView.destroy();
-        webView = null;
-    }
-
-
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == PICK_REQUEST) {
-            if (null != data) {
-                Uri uri = data.getData();
-                handleCallback(uri);
-            } else {
-                // 取消了照片选取的时候调用
-                handleCallback(null);
-            }
-        } else {
-            // 取消了照片选取的时候调用
-            handleCallback(null);
-        }
-    }
-
-    /**
-     * 处理WebView的回调
-     *
-     * @param uri
-     */
-    private void handleCallback(Uri uri) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            if (mFilePathCallbackArray != null) {
-                if (uri != null) {
-                    mFilePathCallbackArray.onReceiveValue(new Uri[]{uri});
-                } else {
-                    mFilePathCallbackArray.onReceiveValue(null);
-                }
-                mFilePathCallbackArray = null;
-            }
-        } else {
-            if (mFilePathCallback != null) {
-                if (uri != null) {
-                    String url = getFilePathFromContentUri(uri, getContentResolver());
-                    Uri u = Uri.fromFile(new File(url));
-
-                    mFilePathCallback.onReceiveValue(u);
-                } else {
-                    mFilePathCallback.onReceiveValue(null);
-                }
-                mFilePathCallback = null;
-            }
-        }
-    }
-
-    public static String getFilePathFromContentUri(Uri selectedVideoUri, ContentResolver contentResolver) {
-        String filePath;
-        String[] filePathColumn = {MediaStore.MediaColumns.DATA};
-
-        Cursor cursor = contentResolver.query(selectedVideoUri, filePathColumn, null, null, null);
-//      也可用下面的方法拿到cursor
-//      Cursor cursor = this.context.managedQuery(selectedVideoUri, filePathColumn, null, null, null);
-
-        cursor.moveToFirst();
-
-        int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-        filePath = cursor.getString(columnIndex);
-        cursor.close();
-        return filePath;
-    }
-
-    private void startForegroundService() {
+    private void startKeepAliveServices() {
         // 启动前台服务
         Intent serviceIntent = new Intent(this, ForegroundService.class);
-        startService(serviceIntent);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(serviceIntent);
+        } else {
+            startService(serviceIntent);
+        }
         
         // 启动双进程保活服务
         startService(new Intent(this, LocalService.class));
@@ -352,4 +276,81 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //设置回退页面
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if ((keyCode == KeyEvent.KEYCODE_BACK) && webView.canGoBack()) {
+            webView.goBack();
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    @Deprecated
+    public void showMessage(String _s) {
+        Toast.makeText(getApplicationContext(), _s, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        try {
+            unregisterReceiver(restartReceiver);
+        } catch (Exception e) {
+            // 忽略未注册的异常
+        }
+        webView.destroy();
+        webView = null;
+    }
+
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == PICK_REQUEST) {
+            if (null != data) {
+                Uri uri = data.getData();
+                handleCallback(uri);
+            } else {
+                // 取消了照片选取的时候调用
+                handleCallback(null);
+            }
+        } else {
+            // 取消了照片选取的时候调用
+            handleCallback(null);
+        }
+    }
+
+    private void handleCallback(Uri uri) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            if (mFilePathCallbackArray != null) {
+                if (uri != null) {
+                    mFilePathCallbackArray.onReceiveValue(new Uri[]{uri});
+                } else {
+                    mFilePathCallbackArray.onReceiveValue(null);
+                }
+                mFilePathCallbackArray = null;
+            }
+        } else {
+            if (mFilePathCallback != null) {
+                if (uri != null) {
+                    String url = getFilePathFromContentUri(uri, getContentResolver());
+                    Uri u = Uri.fromFile(new File(url));
+                    mFilePathCallback.onReceiveValue(u);
+                } else {
+                    mFilePathCallback.onReceiveValue(null);
+                }
+                mFilePathCallback = null;
+            }
+        }
+    }
+
+    public static String getFilePathFromContentUri(Uri selectedVideoUri, ContentResolver contentResolver) {
+        String filePath;
+        String[] filePathColumn = {MediaStore.MediaColumns.DATA};
+        Cursor cursor = contentResolver.query(selectedVideoUri, filePathColumn, null, null, null);
+        cursor.moveToFirst();
+        int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+        filePath = cursor.getString(columnIndex);
+        cursor.close();
+        return filePath;
+    }
 }
