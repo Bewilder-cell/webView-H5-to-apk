@@ -112,10 +112,10 @@ public class MainActivity extends AppCompatActivity {
         }
 
         //初始化崩溃后自启动
-        Thread.setDefaultUncaughtExceptionHandler(new CrashHandler(this));
+        //Thread.setDefaultUncaughtExceptionHandler(new CrashHandler(this));
         
         // 初始化电视保活
-        TVKeepAliveManager.initKeepAlive(this);
+        //TVKeepAliveManager.initKeepAlive(this);
         
         //隐藏ActionBar
         Objects.requireNonNull(getSupportActionBar()).hide();
