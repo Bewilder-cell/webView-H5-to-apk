@@ -43,7 +43,6 @@ import android.util.Log;
 import android.Manifest;
 import android.content.pm.PackageManager;
 
-
 public class MainActivity extends AppCompatActivity {
 
     private WebView webView;
@@ -66,8 +65,6 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        private static final String SHARED_PREFS_NAME = "MyAppPrefs";
-        private static final String KEY_LAST_CRASH_TIME = "last_crash_time
         super.onCreate(savedInstanceState);
          // 注册崩溃处理器
         Thread.setDefaultUncaughtExceptionHandler(new CrashHandler(getApplicationContext()));
@@ -88,27 +85,31 @@ public class MainActivity extends AppCompatActivity {
 
         // 检查并请求必要权限
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            List<String> permissionsToRequest = new ArrayList<>();
-            
-            // 存储权限（Android 6.0+）
-            if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                permissionsToRequest.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-            }
-            if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                permissionsToRequest.add(Manifest.permission.READ_EXTERNAL_STORAGE);
-            }
-        
-            // 通知权限（仅Android 13+）
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                    permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS);
-                }
-            }
-        
-            // 请求未授予的权限
-            if (!permissionsToRequest.isEmpty()) {
-                requestPermissions(permissionsToRequest.toArray(new String[0]), 1);
-            }
+            List<String> permissionsList = new ArrayList<>();
+            permissionsList.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+            permissionsList.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+
+            // // 兼容 Android 13+ 通知权限（通过反射方式，避免低版本编译失败）
+            // if (Build.VERSION.SDK_INT >= 33) {
+            //     try {
+            //         String postNotifications = (String) Manifest.permission.class
+            //                 .getField("POST_NOTIFICATIONS")
+            //                 .get(null);
+            //         permissionsList.add(postNotifications);
+            //     } catch (Exception e) {
+            //         e.printStackTrace(); // 忽略字段不存在异常
+            //     }
+            // }
+
+            // List<String> toRequest = new ArrayList<>();
+            // for (String permission : permissionsList) {
+            //     if (checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED) {
+            //         toRequest.add(permission);
+            //     }
+            // }
+            // if (!toRequest.isEmpty()) {
+            //     requestPermissions(toRequest.toArray(new String[0]), 1);
+            // }
         }
 
         //初始化崩溃后自启动
@@ -128,7 +129,42 @@ public class MainActivity extends AppCompatActivity {
         webView = findViewById(R.id.web_view);
         webView.getSettings().setJavaScriptEnabled(true);
         webView.setWebViewClient(new WebViewClient());
-        
+            // 延迟请求权限
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                requestPermissionsIfNeeded();
+            }
+        }, 5000); // 延迟5秒
+        private void requestPermissionsIfNeeded() {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                List<String> permissionsList = new ArrayList<>();
+                permissionsList.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+                permissionsList.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+
+                if (Build.VERSION.SDK_INT >= 33) {
+                    try {
+                        String postNotifications = (String) Manifest.permission.class
+                                .getField("POST_NOTIFICATIONS")
+                                .get(null);
+                        permissionsList.add(postNotifications);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                List<String> toRequest = new ArrayList<>();
+                for (String permission : permissionsList) {
+                    if (checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED) {
+                        toRequest.add(permission);
+                    }
+                }
+
+                if (!toRequest.isEmpty()) {
+                    requestPermissions(toRequest.toArray(new String[0]), 1);
+                }
+            }
+        }
         // code from https://blog.csdn.net/qq_21138819/article/details/56676007 by 欢子-3824
         webView.setWebChromeClient(new WebChromeClient() {
             // Andorid 4.1----4.4
@@ -201,7 +237,7 @@ public class MainActivity extends AppCompatActivity {
         long timestamp = System.currentTimeMillis();
 
         // 这里填你需要打包的 H5 页面链接，并附加时间戳参数
-        String url = "http://10.84.4.173:8080/";
+        String url = "http://10.84.4.173:8080/?t=" + timestamp;
         // webView.loadUrl("https://www.baidu.com");
         webView.loadUrl(url);
 
