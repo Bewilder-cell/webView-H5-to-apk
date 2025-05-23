@@ -40,6 +40,8 @@ import android.content.ComponentName;
 import android.util.Log;
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.os.PowerManager;
+import android.provider.Settings;
 
 public class MainActivity extends AppCompatActivity {
 
