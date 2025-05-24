@@ -13,11 +13,6 @@
         android:theme="@style/Theme.Hyoa"
         android:usesCleartextTraffic="true"
         tools:targetApi="m">
-                <!-- 用于崩溃后重启的透明Activity -->
-        <activity
-            android:name=".CrashRestartActivity"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar"
-            android:exported="false" />
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name">
