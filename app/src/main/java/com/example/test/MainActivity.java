@@ -1,5 +1,8 @@
 package com.example.test;
-
+// 在 MainActivity.java 文件顶部添加这些导入
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.os.Handler;
 import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.Context;
