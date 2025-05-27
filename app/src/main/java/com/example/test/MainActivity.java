@@ -191,17 +191,32 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, "Restarting app...");
         Intent intent = new Intent(this, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        
+        // 使用更可靠的方式设置 PendingIntent
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, 
-            PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
+            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         if (alarmManager != null) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, 
-                    System.currentTimeMillis() + 100, pendingIntent);
-            } else {
-                alarmManager.setExact(AlarmManager.RTC_WAKEUP, 
-                    System.currentTimeMillis() + 100, pendingIntent);
+            try {
+                // 使用 setAlarmClock，这在电视系统上更可靠
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    alarmManager.setAlarmClock(new AlarmManager.AlarmClockInfo(
+                        System.currentTimeMillis() + 100, pendingIntent), pendingIntent);
+                } else {
+                    alarmManager.setExact(AlarmManager.RTC_WAKEUP, 
+                        System.currentTimeMillis() + 100, pendingIntent);
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error setting alarm: " + e.getMessage());
+                // 备用方案：使用 Handler 延迟启动
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        startActivity(intent);
+                        finish();
+                    }
+                }, 100);
             }
         }
         
