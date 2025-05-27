@@ -37,7 +37,6 @@ public class MainActivity extends AppCompatActivity {
         Manifest.permission.INTERNET,
         Manifest.permission.READ_EXTERNAL_STORAGE,
         Manifest.permission.WRITE_EXTERNAL_STORAGE,
-        Manifest.permission.POST_NOTIFICATIONS
     };
 
     private final BroadcastReceiver restartReceiver = new BroadcastReceiver() {

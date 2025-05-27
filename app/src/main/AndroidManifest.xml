@@ -29,7 +29,6 @@
                 <!-- 让应用变成默认桌面（这样电视开机后可以直接进入你的应用） -->
                 <category android:name="android.intent.category.HOME" />
                 <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <service
