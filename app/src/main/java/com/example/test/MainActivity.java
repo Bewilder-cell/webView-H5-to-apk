@@ -90,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
         settings.setSupportMultipleWindows(true);
         settings.setLoadWithOverviewMode(true);
         settings.setUseWideViewPort(true);
-        settings.setSupportZoom(true);
+        settings.setSupportZoom(true); 
         settings.setBuiltInZoomControls(true);
         settings.setDisplayZoomControls(false);
         settings.setDefaultTextEncodingName("utf-8");
