@@ -74,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initWebView() {
-        webView = findViewById(R.id.webView);
+        webView = findViewById(R.id.web_view); 
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
