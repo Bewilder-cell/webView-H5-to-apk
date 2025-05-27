@@ -52,6 +52,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //隐藏ActionBar
+        Objects.requireNonNull(getSupportActionBar()).hide();
+        setContentView(R.layout.activity_main);
         setContentView(R.layout.activity_main);
         
         // 初始化 WebView
