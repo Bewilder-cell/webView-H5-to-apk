@@ -116,7 +116,7 @@ public class MainActivity extends AppCompatActivity {
             public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
                 super.onReceivedError(view, errorCode, description, failingUrl);
                 Log.e(TAG, "WebView error: " + description);
-                restartApp();
+                // restartApp();
             }
         });
         
@@ -139,7 +139,7 @@ public class MainActivity extends AppCompatActivity {
         });
         
         // 加载URL
-        String url = "http://10.114.136.173:8082/#/";
+        String url = "https://www.baidu.com";
         webView.loadUrl(url);
     }
 
