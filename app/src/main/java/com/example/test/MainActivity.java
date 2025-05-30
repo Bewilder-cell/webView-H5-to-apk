@@ -74,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(TAG, "Test: Triggering app restart after 10 seconds...");
                 restartApp();
             }
-        }, 30000); // 10秒后触发
+        }, 60000*60*5); // 5小时触发一次
     }
 
     private void initWebView() {
@@ -139,7 +139,7 @@ public class MainActivity extends AppCompatActivity {
         });
         
         // 加载URL
-        String url = "https://www.baidu.com";
+        String url = "http://172.172.172.124:8989/#/aj/RhnWpmSf";
         webView.loadUrl(url);
     }
 

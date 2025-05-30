@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">测试一楼</string>
+    <string name="app_name">LCD屏幕</string>
     <string name="title_home">Home</string>
     <string name="title_dashboard">Dashboard</string>
     <string name="title_notifications">Notifications</string>
