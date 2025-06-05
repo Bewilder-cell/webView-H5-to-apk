@@ -74,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(TAG, "Test: Triggering app restart after 10 seconds...");
                 restartApp();
             }
-        }, 60000*60*5*5); // 5小时触发一次
+        }, 60000*60*5*24); // 25小时触发一次
     }
 
     private void initWebView() {
@@ -104,7 +104,6 @@ public class MainActivity extends AppCompatActivity {
         settings.setBlockNetworkLoads(false);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         settings.setMediaPlaybackRequiresUserGesture(false);
-        
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
@@ -139,7 +138,7 @@ public class MainActivity extends AppCompatActivity {
         });
         
         // 加载URL
-        String url = "http://10.114.136.173:8082/#/";
+        String url = "http://192.168.6.212:8089";
         webView.loadUrl(url);
     }
 
