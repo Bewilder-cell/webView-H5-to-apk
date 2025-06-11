@@ -138,7 +138,7 @@ public class MainActivity extends AppCompatActivity {
         });
         
         // 加载URL
-        String url = "http://192.168.6.212:8107";
+        String url = "http://172.172.172.124:8989/#/aj/RhnWpmSf";
         webView.loadUrl(url);
     }
 
