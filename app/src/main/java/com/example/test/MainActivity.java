@@ -100,7 +100,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        String url = " http://10.114.136.173:8282/#/pages/views/pickStateTWSB";
+        String url = "http://10.114.136.173:8082/#/pages/views/pickStateNewTW";
         webView.loadUrl(url);
     }
 
