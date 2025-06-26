@@ -136,9 +136,9 @@ public class MainActivity extends AppCompatActivity {
                 handleDownload(url, contentDisposition, mimeType);
             }
         });
-        
+        // GS-Report分享链接：http://172.16.10.10:8090/#/aj/AsNZYR0s
         // 加载URL
-        String url = "http://10.114.136.173:8282/#/pages/views/pickStateNewTW";
+        String url = "http://172.16.10.10:8090/#/aj/AsNZYR0s";
         webView.loadUrl(url);
     }
 
