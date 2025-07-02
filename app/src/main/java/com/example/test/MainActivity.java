@@ -100,7 +100,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        String url = "http://172.17.3.215:8383/#/pages/views/pickTemplate/pickStateQFErrorState";
+        String url = "http://172.17.3.215:8383/#/pages/views/pickTemplate/pickStateQFError";
         webView.loadUrl(url);
     }
 
