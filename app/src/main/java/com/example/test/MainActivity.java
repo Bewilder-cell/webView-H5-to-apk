@@ -141,9 +141,10 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
+        
 
         // 这里填你需要打包的 H5 页面链接
-        webView.loadUrl("http://172.16.10.10:8081/#/");
+        webView.loadUrl("http://172.16.60.101:8082/#/pages/index/index?proIndex=30");
 
         //显示一些小图片（头像）
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -159,7 +160,7 @@ public class MainActivity extends AppCompatActivity {
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setMediaPlaybackRequiresUserGesture(false);
 
-        startForegroundService();
+       // startForegroundService();
 
         webView.loadUrl("javascript:(function() { " +
             "var audio = document.getElementById('alarmSound');" +
