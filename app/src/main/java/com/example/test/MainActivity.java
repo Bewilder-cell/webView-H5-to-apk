@@ -100,7 +100,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        String url = "http://172.17.3.215:8383/#/";
+        String url = "http://192.168.6.95:8088";
         webView.loadUrl(url);
     }
 
