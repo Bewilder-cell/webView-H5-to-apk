@@ -138,7 +138,7 @@ public class MainActivity extends AppCompatActivity {
         });
         // GS-Report分享链接：http://172.16.10.10:8090/#/aj/AsNZYR0s
         // 加载URL
-        String url = "http://192.168.40.2:8088/#/";
+        String url = "http://192.168.10.175:18080/RDP-SERVER/obddpshow/show/17f7f1c0c656d187606b6ffcf58403bb";
         webView.loadUrl(url); 
     }
 
