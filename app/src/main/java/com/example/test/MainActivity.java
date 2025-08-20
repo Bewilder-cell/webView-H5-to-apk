@@ -74,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(TAG, "Test: Triggering app restart after 10 seconds...");
                 restartApp();
             }
-        }, 60000*60*5); // 25小时触发一次
+        }, 60000*60*1); // 1小时触发一次
     }
 
     private void initWebView() {
