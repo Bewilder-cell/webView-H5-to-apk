@@ -3,5 +3,5 @@
     <string name="title_home">Home</string>
     <string name="title_dashboard">Dashboard</string>
     <string name="title_notifications">Notifications</string>
-    <!-- <string name="accessibility_service_description">此服务用于保持应用在后台运行</string> -->
+    <string name="accessibility_service_description">此服务用于保持应用在后台运行</string>
 </resources>

@@ -259,11 +259,11 @@ public class MainActivity extends AppCompatActivity {
         startService(serviceIntent);
         
         // 启动双进程保活服务
-        startService(new Intent(this, LocalService.class));
-        startService(new Intent(this, RemoteService.class));
+        // startService(new Intent(this, LocalService.class));
+        // startService(new Intent(this, RemoteService.class));
         
         // 设置并启动 JobScheduler
-        scheduleJob();
+        // scheduleJob();
     }
     
     private void scheduleJob() {
