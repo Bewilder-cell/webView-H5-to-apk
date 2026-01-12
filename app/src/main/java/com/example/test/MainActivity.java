@@ -43,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
 
         initWebView();
         checkAndRequestPermissions();
-        scheduleDailyRestart(); // 每天定时重启
+        // scheduleDailyRestart(); // 每天定时重启
     }
 
     private void initWebView() {
@@ -100,7 +100,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        String url = "http://192.168.6.95:8088";
+        String url = "https://10.119.32.119:8091/#/aj/WFayv1hT";
         webView.loadUrl(url);
     }
 
