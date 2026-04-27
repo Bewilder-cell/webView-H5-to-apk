@@ -144,7 +144,7 @@ public class MainActivity extends AppCompatActivity {
         
 
         // 这里填你需要打包的 H5 页面链接
-        webView.loadUrl("http://192.168.112.110:8090/#/aj/CksCFpQX");
+        webView.loadUrl("http://192.168.151.41:8090/#/aj/zbFbHECe");
 
         //显示一些小图片（头像）
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
