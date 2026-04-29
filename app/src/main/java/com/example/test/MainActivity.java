@@ -120,7 +120,7 @@ public class MainActivity extends AppCompatActivity {
         });
         
         webView.setWebChromeClient(new WebChromeClient() {
-            @Override
+            @Override 
             public void onProgressChanged(WebView view, int newProgress) {
                 super.onProgressChanged(view, newProgress);
                 Log.d(TAG, "Loading progress: " + newProgress + "%");
