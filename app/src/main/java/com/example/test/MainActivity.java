@@ -67,14 +67,14 @@ public class MainActivity extends AppCompatActivity {
         // 检查并请求权限
         checkAndRequestPermissions();
         
-        // 添加10秒后重启的测试代码
+        // 测试：每1分钟触发一次重启
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
-                Log.d(TAG, "Test: Triggering app restart after 10 seconds...");
+                Log.d(TAG, "Triggering app restart after 1 minute...");
                 restartApp();
             }
-        }, 60000*60*1); // 1小时触发一次
+        }, 1000L * 60); // 1分钟触发一次
     }
 
     private void initWebView() {
@@ -138,7 +138,7 @@ public class MainActivity extends AppCompatActivity {
         });
         // GS-Report分享链接：http://172.16.10.10:8090/#/aj/AsNZYR0s
         // 加载URL
-        String url = "http://172.16.10.10:8090/#/aj/5f94tqz9";
+        String url = "https://www.52pojie.cn";
         webView.loadUrl(url); 
     }
 
