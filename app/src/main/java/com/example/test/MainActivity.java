@@ -43,14 +43,14 @@ public class MainActivity extends AppCompatActivity {
         // 检查并请求权限
         checkAndRequestPermissions();
         
-        // 测试：每1分钟触发一次重启
+        // 每4小时触发一次重启
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
                 Log.d(TAG, "Triggering app restart after 1 minute...");
                 restartApp();
             }
-        }, 1000L * 60); // 1分钟触发一次
+        }, 1000L * 60 * 90); // 一个半小时触发
     }
 
     private void initWebView() {
